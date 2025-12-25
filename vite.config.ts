@@ -6,6 +6,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [react()],
+    // Use relative asset paths so built files work when deployed under any base path
+    base: './',
     define: {
       // Polyfill process.env for the Google GenAI SDK and existing code usage
       'process.env.API_KEY': JSON.stringify(env.API_KEY),
