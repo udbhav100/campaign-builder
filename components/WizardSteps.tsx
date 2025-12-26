@@ -54,7 +54,7 @@ export const StepObjective: React.FC<{
   );
 };
 
-// --- Step 2: URL & Location ---
+// --- Step 2: URL ---
 export const StepUrl: React.FC<{ 
   url: string; setUrl: (s: string) => void;
   name: string; setName: (s: string) => void;
@@ -86,67 +86,63 @@ export const StepUrl: React.FC<{
     <div className="space-y-8 animate-fade-in">
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Where should people go?</h2>
-        <p className="text-slate-600">Enter your business details.</p>
+        <p className="text-slate-600">Enter your business website and details.</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
-        <div className="space-y-6">
-            <div className="space-y-4">
-                <Input 
-                label="Website URL *" 
-                placeholder="www.yourbusiness.com" 
-                value={url}
-                onChange={(e) => handleChangeUrl(e.target.value)}
-                error={error}
-                autoFocus
-                />
-                <Input 
-                label="Business Name (Optional)" 
-                placeholder="Joe's Pizza" 
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                />
-                <Input 
-                  label="City (Optional)" 
-                  placeholder="e.g. New York, NY" 
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                />
-            </div>
+        <div className="space-y-4">
+            <Input 
+            label="Website URL *" 
+            placeholder="www.yourbusiness.com" 
+            value={url}
+            onChange={(e) => handleChangeUrl(e.target.value)}
+            error={error}
+            autoFocus
+            />
+            <Input 
+            label="Business Name (Optional)" 
+            placeholder="Joe's Pizza" 
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            />
+            <Input 
+            label="City (Optional)" 
+            placeholder="New York" 
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            />
         </div>
 
-        <div className="space-y-4">
-            {campaign.snapshot && !error && url.length > 3 && (
-                <div className="animate-fade-in-up">
-                    <div className="text-sm font-semibold text-slate-500 mb-2 uppercase tracking-wide">Business Snapshot</div>
-                    <Card className="p-6 border-blue-200 bg-blue-50/50">
-                        <div className="flex items-start gap-4">
-                            <img 
-                            src={campaign.snapshot.faviconUrl} 
-                            alt="favicon" 
-                            className="w-12 h-12 rounded-lg bg-white p-1 border border-slate-200 shadow-sm"
-                            onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/48?text=Site')}
-                            />
-                            <div>
-                                <h3 className="font-bold text-lg text-slate-900">{campaign.snapshot.domain}</h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Badge color={campaign.snapshot.confidence === 'High' ? 'green' : 'yellow'}>
-                                        {campaign.snapshot.category}
-                                    </Badge>
-                                    {campaign.snapshot.confidence === 'Low' && <span className="text-xs text-slate-500">Unsure?</span>}
-                                </div>
+        {campaign.snapshot && !error && url.length > 3 && (
+            <div className="animate-fade-in-up">
+                <div className="text-sm font-semibold text-slate-500 mb-2 uppercase tracking-wide">Business Snapshot</div>
+                <Card className="p-6 border-blue-200 bg-blue-50/50">
+                    <div className="flex items-start gap-4">
+                        <img 
+                          src={campaign.snapshot.faviconUrl} 
+                          alt="favicon" 
+                          className="w-12 h-12 rounded-lg bg-white p-1 border border-slate-200 shadow-sm"
+                          onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/48?text=Site')}
+                        />
+                        <div>
+                            <h3 className="font-bold text-lg text-slate-900">{campaign.snapshot.domain}</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                                <Badge color={campaign.snapshot.confidence === 'High' ? 'green' : 'yellow'}>
+                                    {campaign.snapshot.category}
+                                </Badge>
+                                {campaign.snapshot.confidence === 'Low' && <span className="text-xs text-slate-500">Unsure?</span>}
                             </div>
                         </div>
-                        {campaign.snapshot.isSocial && (
-                            <div className="mt-4 flex items-start gap-2 text-sm text-amber-700 bg-amber-50 p-3 rounded-md border border-amber-200">
-                                <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
-                                <p>Works best with your own website. Social pages may limit our AI suggestions.</p>
-                            </div>
-                        )}
-                    </Card>
-                </div>
-            )}
-        </div>
+                    </div>
+                    {campaign.snapshot.isSocial && (
+                        <div className="mt-4 flex items-start gap-2 text-sm text-amber-700 bg-amber-50 p-3 rounded-md border border-amber-200">
+                            <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
+                            <p>Works best with your own website. Social pages may limit our AI suggestions.</p>
+                        </div>
+                    )}
+                </Card>
+            </div>
+        )}
       </div>
     </div>
   );
@@ -165,26 +161,10 @@ const calculateAdStrength = (headline: string, description: string, keywords: st
   
   if (description.length > 30) score += 30;
 
-  // 2. Keyword match (Token-based)
-  // Stop words to ignore in matching
-  const stopWords = ['in', 'the', 'at', 'on', 'of', 'for', 'to', 'a', 'an', 'and', 'me', 'my'];
+  // 2. Keyword match
+  // Ensure we have active keywords to check against
   const activeKeywords = keywords.filter(k => k.length > 0);
-  
-  // Extract significant tokens from keywords
-  const keywordTokens = new Set<string>();
-  activeKeywords.forEach(k => {
-     k.toLowerCase().split(/\s+/).forEach(word => {
-        const cleaned = word.replace(/[^a-z0-9]/g, ''); // Remove punctuation
-        if (cleaned.length > 2 && !stopWords.includes(cleaned)) {
-            keywordTokens.add(cleaned);
-        }
-     });
-  });
-
-  // Check if headline contains at least one significant token
-  const headlineWords = lowerHead.split(/\s+/).map(w => w.replace(/[^a-z0-9]/g, ''));
-  const hasKeyword = headlineWords.some(w => keywordTokens.has(w));
-
+  const hasKeyword = activeKeywords.some(k => lowerHead.includes(k.toLowerCase()));
   if (hasKeyword) {
       score += 30;
   } 
@@ -196,9 +176,7 @@ const calculateAdStrength = (headline: string, description: string, keywords: st
 
   // Determine Tip
   if (!hasKeyword && activeKeywords.length > 0) {
-      // Find a simple keyword to recommend
-      const simplerKw = activeKeywords[0].split(' ')[0] || activeKeywords[0];
-      tip = `Tip: Add a word like '${simplerKw}' to your headline.`;
+      tip = `Tip: Add the keyword '${activeKeywords[0]}' to your headline.`;
   } else if (headline.length <= 15) {
       tip = "Tip: Make your headline a bit longer for better visibility.";
   } else if (!hasPower) {
@@ -777,15 +755,10 @@ export const StepReview: React.FC<{
                 <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
                     {objective?.icon && React.createElement(objective.icon as any, {size: 20})}
                 </div>
-                <div className="flex-1">
+                <div>
                     <div className="font-semibold text-slate-900">{objective?.label}</div>
                     <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
                         <ExternalLink size={12}/> {campaign.url}
-                    </div>
-                    {/* Location Summary */}
-                    <div className="mt-2 flex items-center gap-2 text-xs text-slate-600 bg-slate-50 px-2 py-1 rounded w-fit">
-                        <MapPin size={12} />
-                        <span>{campaign.city || 'Anywhere'}</span>
                     </div>
                 </div>
             </div>
@@ -821,7 +794,7 @@ export const StepReview: React.FC<{
             </div>
         </ReviewSection>
 
-        {/* Budget Protection */}
+        {/* New Feature: Budget Protection */}
         <div className="p-5 hover:bg-slate-50 transition-colors group">
             <div className="flex justify-between items-center mb-3">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">

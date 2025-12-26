@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, ExternalLink, Activity, MousePointer2, DollarSign, Eye, Info, X, CheckCircle, AlertTriangle, TrendingUp, Copy, RefreshCw, Smartphone, ShoppingCart, MapPin, Globe, MessageCircle, Clock, ChevronDown, ChevronUp, ShieldCheck, Zap, Calendar } from 'lucide-react';
+import { Plus, Search, ExternalLink, Activity, MousePointer2, DollarSign, Eye, Info, X, CheckCircle, AlertTriangle, TrendingUp, Copy, RefreshCw, Smartphone, ShoppingCart, MapPin, Globe, MessageCircle, Clock, ChevronDown, ChevronUp, ShieldCheck, Zap, Lightbulb } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Container, Button, Card, Badge } from '../components/Common';
 import { getCampaigns, generateSuggestionsFromUrl } from '../utils';
@@ -385,7 +385,7 @@ const LiveCampaignPanel: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
                 <div className="flex items-center gap-2">
                     <span className="relative flex h-2.5 w-2.5">
                         {isActive && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
-                        <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isActive ? 'bg-green-500' : 'bg-slate-400'}`}></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 ${isActive ? 'bg-green-500' : 'bg-slate-400'}"></span>
                     </span>
                     <span className="text-sm font-bold text-blue-900 uppercase tracking-wide">Live Performance</span>
                 </div>
@@ -540,24 +540,6 @@ const LiveCampaignPanel: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
                     </div>
                 ))}
             </div>
-            
-            {/* New: Campaign Settings Summary */}
-            <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 lg:col-span-2">
-                <div className="text-xs uppercase font-semibold text-slate-500 mb-3 flex items-center gap-2">
-                    <Zap size={12}/> Campaign Settings
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3">
-                         <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                             <MapPin size={16}/>
-                         </div>
-                         <div>
-                             <div className="text-xs text-slate-500">Targeting</div>
-                             <div className="text-sm font-medium text-slate-900">{campaign.city || 'Anywhere'}</div>
-                         </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <TrackingFixModal 
@@ -569,54 +551,207 @@ const LiveCampaignPanel: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
   );
 };
 
-// --- Main Dashboard Page ---
+
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
 
   useEffect(() => {
-    const loaded = getCampaigns();
-    // Sort by created desc
-    setCampaigns(loaded.reverse());
+    const loaded = getCampaigns().reverse(); // Newest first
+    setCampaigns(loaded);
+    if (loaded.length > 0) {
+        setSelectedCampaign(loaded[0]);
+    }
   }, []);
 
+  const getDisplayName = (c: Campaign) => {
+    if (c.businessName && c.businessName.trim() !== '') return c.businessName;
+    if (c.url.toLowerCase().includes('facebook.com')) return 'Facebook Campaign';
+    return c.url;
+  };
+
+  const getDisplayUrl = (url: string) => {
+    try {
+        const u = new URL(url.startsWith('http') ? url : `https://${url}`);
+        return u.hostname;
+    } catch {
+        return url;
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 py-8 pb-20">
+    <div className="min-h-screen bg-slate-50 py-8">
       <Container>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">Campaign Dashboard</h1>
-              <p className="text-slate-600">Monitor your active ads and performance.</p>
-            </div>
-            <Button onClick={() => navigate('/builder')}>
-                <Plus size={16} className="mr-2"/> New Campaign
-            </Button>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
+          <Button onClick={() => navigate('/builder')}>
+            <Plus size={18} className="mr-2" /> Create New Campaign
+          </Button>
         </div>
 
         {campaigns.length === 0 ? (
-           <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
-               <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 text-blue-500">
-                   <Activity size={32} />
-               </div>
-               <h3 className="text-lg font-bold text-slate-900 mb-2">No campaigns yet</h3>
-               <p className="text-slate-500 mb-8 max-w-md text-center">Launch your first ad campaign in minutes. We'll handle the strategy, you watch the results.</p>
-               <Button onClick={() => navigate('/builder')} size="lg">Start Campaign</Button>
-           </div>
+          <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
+            <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+              <Search className="text-slate-400" size={32} />
+            </div>
+            <h3 className="text-lg font-medium text-slate-900 mb-1">No campaigns yet</h3>
+            <p className="text-slate-500 mb-6">Get started by creating your first ad campaign.</p>
+            <Button variant="outline" onClick={() => navigate('/builder')}>
+              Start Building
+            </Button>
+          </div>
         ) : (
-           <div className="space-y-12">
-               {campaigns.map((c, i) => (
-                   <div key={c.id} className="animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
-                       <div className="flex items-center justify-between mb-4">
-                           <div className="flex items-center gap-3">
-                               <h2 className="text-lg font-bold text-slate-900">{c.name || c.url}</h2>
-                               <Badge color="green">Live</Badge>
-                               <span className="text-xs text-slate-500">Started {new Date(c.createdAt).toLocaleDateString()}</span>
-                           </div>
+          <div className="space-y-8">
+            {/* 1. Campaign List (Grid Layout) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+               {campaigns.map(c => {
+                 const objLabel = OBJECTIVES.find(o => o.id === c.objective)?.label || c.objective;
+                 const displayName = getDisplayName(c);
+                 const isSelected = selectedCampaign?.id === c.id;
+
+                 return (
+                   <Card 
+                     key={c.id} 
+                     onClick={() => setSelectedCampaign(c)}
+                     className={`p-5 flex items-center justify-between transition-all cursor-pointer ${isSelected ? 'ring-2 ring-blue-500 border-transparent shadow-md' : 'hover:shadow-md'}`}
+                   >
+                     <div className="flex items-center gap-4 overflow-hidden">
+                       <div className={`w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center font-bold text-lg overflow-hidden ${isSelected ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-600'}`}>
+                         {c.snapshot?.faviconUrl ? (
+                             <img src={c.snapshot.faviconUrl} className="w-full h-full object-cover" alt="icon" onError={(e) => (e.currentTarget.style.display='none')}/>
+                         ) : (
+                             displayName.charAt(0).toUpperCase()
+                         )}
                        </div>
-                       <LiveCampaignPanel campaign={c} />
+                       <div className="min-w-0">
+                         <h3 className="font-bold text-slate-900 truncate" title={displayName}>{displayName}</h3>
+                         <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-slate-500 flex-shrink-0">{new Date(c.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                            <span className="text-slate-300 flex-shrink-0">•</span>
+                            <span className="text-xs text-slate-600 truncate">{objLabel}</span>
+                         </div>
+                       </div>
+                     </div>
+                     <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
+                       <Badge color={c.status === 'Live' ? 'green' : 'gray'}>{c.status}</Badge>
+                       {isSelected && <Activity size={16} className="text-blue-500 mt-1" />}
+                     </div>
+                   </Card>
+                 );
+               })}
+            </div>
+
+            {/* 2. Details Panel (Full Width) */}
+            {selectedCampaign ? (
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 animate-fade-in scroll-mt-24" id="details-view">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pb-6 border-b border-slate-100 gap-4">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-2xl font-bold text-slate-900 truncate" title={getDisplayName(selectedCampaign)}>
+                      {getDisplayName(selectedCampaign)}
+                    </h2>
+                    <a 
+                      href={selectedCampaign.url.startsWith('http') ? selectedCampaign.url : `https://${selectedCampaign.url}`} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="text-sm text-blue-600 hover:underline flex items-center gap-1 mt-1 group w-fit"
+                      title={selectedCampaign.url}
+                    >
+                      <span className="truncate max-w-[300px]">{selectedCampaign.url}</span> 
+                      <ExternalLink size={12} className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"/>
+                    </a>
+                  </div>
+                  <div className="flex gap-2">
+                     <Button size="sm" variant="outline" onClick={() => navigate('/builder')}>Edit Campaign</Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                   {/* Left Col: Main Metrics (2/3) */}
+                   <div className="xl:col-span-2">
+                        {selectedCampaign.status === 'Live' ? (
+                            <LiveCampaignPanel campaign={selectedCampaign} />
+                        ) : (
+                            <div className="mb-6">
+                              <div className="text-xs uppercase font-semibold text-slate-500 mb-2">Pre-Launch Estimates</div>
+                              <div className="bg-slate-50 p-6 rounded-lg border border-slate-100 grid grid-cols-2 gap-8">
+                                <div>
+                                  <div className="text-sm text-slate-600 mb-1">Weekly Volume</div>
+                                  <div className="text-2xl font-bold text-slate-900">
+                                    {selectedCampaign.estimates?.visitorsMin ?? 0} - {selectedCampaign.estimates?.visitorsMax ?? 0}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-sm text-slate-600 mb-1">Est. Cost</div>
+                                  <div className="text-2xl font-bold text-slate-900">
+                                   ₹{selectedCampaign.estimates?.cplMin ?? 0} - ₹{selectedCampaign.estimates?.cplMax ?? 0}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                        )}
                    </div>
-               ))}
-           </div>
+
+                   {/* Right Col: Smart Assistant (1/3) */}
+                   <div className="space-y-6 h-full border-l border-slate-100 pl-8 hidden xl:block">
+                        {/* Card A: Opportunity */}
+                        <div className="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden">
+                            <div className="bg-amber-50 px-4 py-3 border-b border-amber-100 flex items-center gap-2">
+                                <Lightbulb size={16} className="text-amber-600 fill-amber-100" />
+                                <span className="font-bold text-amber-800 text-sm uppercase tracking-wide">Opportunity Detected</span>
+                            </div>
+                            <div className="p-5">
+                                <h3 className="font-bold text-slate-900 mb-2">Creative Fatigue Warning</h3>
+                                <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+                                    Your CTR has dropped by 5% in the last hour. Consider rotating your ad headlines.
+                                </p>
+                                <Button 
+                                    size="sm" 
+                                    className="w-full bg-amber-600 hover:bg-amber-700 border-transparent text-white shadow-none"
+                                    onClick={() => toast.success("Creative auto-rotated", { icon: '🔄' })}
+                                >
+                                    Auto-Rotate Creative
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Card B: Activity Log */}
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                                    <Zap size={16} className="text-slate-400" /> System Events
+                                </h3>
+                            </div>
+                            <div className="divide-y divide-slate-50">
+                                {[
+                                    { time: "Just now", msg: "Budget pacing check passed." },
+                                    { time: "2m ago", msg: "Competitor 'Joe's Pizza' increased bids." },
+                                    { time: "15m ago", msg: "New 'High Intent' visitor detected." },
+                                    { time: "1h ago", msg: "Campaign started." }
+                                ].map((evt, i) => (
+                                    <div key={i} className="p-3 flex gap-3 hover:bg-slate-50 transition-colors group">
+                                        <div className="flex flex-col items-center mt-1.5">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-blue-400 transition-colors"></div>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-slate-700 font-medium leading-tight">{evt.msg}</p>
+                                            <p className="text-[10px] text-slate-400 mt-1">{evt.time}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                   </div>
+                </div>
+              </div>
+            ) : (
+              <div className="h-64 flex flex-col items-center justify-center p-8 bg-slate-50 rounded-xl border border-dashed border-slate-300 text-slate-400 mt-8">
+                <MousePointer2 size={32} className="mb-2 opacity-50"/>
+                <p>Select a campaign above to view performance details</p>
+              </div>
+            )}
+          </div>
         )}
       </Container>
     </div>
